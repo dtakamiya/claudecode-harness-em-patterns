@@ -157,7 +157,22 @@ MCPサーバーを使わず、Bashツール経由で `curl` を叩く、また�
 
 ## 次回調査の候補（未着手）
 
-- Atlassian Remote MCP Serverのクレジット消費・利用上限の詳細（個人アカウント/Free-Standardプランでの扱い）
 - Confluence `atlas_doc_format`（ADF）の具体的なJSON構造（表・リストを含む週報テンプレートを作る場合に必要になる可能性）
 - Jira Webhooks（ポーリングでなくプッシュ通知でリスク検知する代替手段になり得るか）
 - Confluence REST API v2 の検索系エンドポイント（既存ページの検索・重複作成防止に必要）
+
+---
+
+## 4. Atlassian Remote MCP Server（Rovo MCP）のクレジット消費・利用上限（新規調査、2026-09-23）
+
+前回サイクルの「次回調査の候補」だった項目を裏取り。**個人EM利用では無視できない制約**が判明したため、§3-3の結論を補強する。
+
+出典: [How Rovo credits work](https://support.atlassian.com/rovo/docs/rovo-usage-limits/)、[Does atlassian-rovo-mcp cost anything for using the mcp server](https://community.atlassian.com/forums/Rovo-questions/Does-atlassian-rovo-mcp-cost-anything-for-using-the-mcp-server/qaq-p/3249021)
+
+- Atlassian Remote MCP Server（2026年2月GA）経由の呼び出しは **Rovo credit** を消費する。無料枠は Rovo Search / Definitions / Summaries のみで、MCP server経由でTeamwork Graphから「enrichされたコンテキスト」を取得する呼び出しはすべて課金対象。
+- **月間許容量はプランのシート単位で組織にプールされる**（個人単位の枠ではない）: Jira/Confluenceそれぞれ Standard **25 credits/user/月**、Premium 70、Enterprise 150。
+- 課金イベントは「Intelligence」（チャット等のAI推論、基本タスクで10 credits）と「Context」（Teamwork Graph API呼び出し・MCPツールコールを含む、enrichされたクロスプロダクトクエリで1〜10 credits）の2種。**通常の「課題一覧を取ってくる」ようなMCPツールコールも1〜10 creditsを消費する**ため、Standardプランの25 credits/月では、EM個人が毎朝の進捗集約に使うだけで数日〜1週間程度で枠を使い切る計算になる。
+- 枠超過後は「追加利用課金（既定でオン）」なら管理者設定の上限額まで課金継続、上限到達で停止。オフなら枠補充まで即停止。超過レートは **$0.01/credit（$10/1,000 credits）**。
+- 個人（組織のAtlassian管理者ではない一利用者）が上限緩和や追加購入を単独で判断できるかは未確認 — 組織のAtlassian契約次第。
+
+**結論の補強**: §3-3で示した「主設計はJira/Confluence REST APIを直接curlで叩くカスタムツール、公式MCPサーバーは参考扱い」という方針は、コスト面からも妥当性が高まった。Rovo MCP経由は毎日の自動集約のような高頻度用途には月間枠が明らかに不足しており、個人PMハーネスの常設運用には向かない。
